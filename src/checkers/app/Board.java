@@ -14,7 +14,7 @@ import javax.swing.ImageIcon;
  *
  * @author aaron
  */
-public class Board /*extends Container*/ implements Cloneable {
+public class Board {
     
     //==========================================================================
     // PROPERTIES
@@ -50,15 +50,47 @@ public class Board /*extends Container*/ implements Cloneable {
     
     /**
      * Creates a default board with 8 rows and 8 columns
+	 * @param isNew indicates if we need to initialize new pieces
      */
     public Board() {
-        p1.setOpponent(p2);
+		p1.setOpponent(p2);
         p2.setOpponent(p1);
-        setSlots(new Slot[rows][columns]);
-        //this.setLayout(new GridLayout(getRows(), getColumns()));
-        createBoard();
-        initPieces();
+		setSlots(new Slot[rows][columns]);
+		createBoard();
+		initPieces();
     }
+	
+	/**
+	 * Cloning constructor, creates a deep copy of an already-existing board
+	 * @param board: the board to be copied
+	 */
+	public Board(Board board) {
+		//Clone player and pieces
+		this.setP1(new Player(board.getP1()));
+		this.setP2(new Player(board.getP2()));
+		p1.setOpponent(p2);
+        p2.setOpponent(p1);
+		this.setRows(board.getRows());
+		this.setColumns(board.getColumns());
+		
+		//Clone slots
+		Slot[][] clonedSlots = new Slot[rows][columns];
+		for(int r = 0; r < board.getRows(); r++) {
+			for(int c = 0; c < board.getColumns(); c++) {
+				clonedSlots[r][c] = new Slot(board.getSlots()[r][c]);
+			}
+		}
+		this.setSlots(clonedSlots);
+
+		//Set new pieces to new slots
+		for(int i = 0; i < getP1().getPieces().size(); i++) {
+			this.getP1().getPieces().get(i).setSlot(this.getSlots()[board.getP1().getPieces().get(i).getSlot().getRow()][board.getP1().getPieces().get(i).getSlot().getColumn()]);
+		}
+		for(int i = 0; i < getP2().getPieces().size(); i++) {
+			this.getP2().getPieces().get(i).setSlot(this.getSlots()[board.getP2().getPieces().get(i).getSlot().getRow()][board.getP2().getPieces().get(i).getSlot().getColumn()]);
+		}
+		
+	}
     
     /**
      * Creates a board with custom rows and columns
@@ -75,25 +107,6 @@ public class Board /*extends Container*/ implements Cloneable {
         createBoard();
         initPieces();
     }
-    
-    /**
-     * Create a new board with existing pieces of two players
-     * @param piecesP1 Pieces of Player 1
-     * @param piecesP2 Pieces of Player 2
-     */
-    /*public Board(ArrayList<Piece> piecesP1, ArrayList<Piece> piecesP2) {
-        p1.setOpponent(p2);
-        p2.setOpponent(p1);
-        setSlots(new Slot[rows][columns]);
-        //this.setLayout(new GridLayout(getRows(), getColumns()));
-        createBoard();
-        for(Piece piece : getP1().getPieces()) {
-            piece.getSlot().add(piece.getPieceDesign());
-        }
-        for(Piece piece : getP2().getPieces()) {
-            piece.getSlot().add(piece.getPieceDesign());
-        }
-    }*/
     
     //==========================================================================
     // METHODS
@@ -134,14 +147,11 @@ public class Board /*extends Container*/ implements Cloneable {
                 if(!(i % 2 == j % 2) && i < 3) {
                     Piece piece = new Piece(p1);
                     getSlots()[i][j].addPiece(piece);
-                    //piece.getPieceDesign().setIcon(new ImageIcon(new ImageIcon(getClass().getResource("P1 Piece.png")).getImage().getScaledInstance(piece.getPieceDesign().getWidth(), piece.getPieceDesign().getHeight(), Image.SCALE_DEFAULT)));
-                    //getSlots()[i][j].add(piece.getPieceDesign());
                     getP1().getPieces().add(piece);
                 } else if(!(i % 2 == j % 2) && i > getRows()-4) {
                     Piece piece = new Piece(p2);
                     getSlots()[i][j].addPiece(piece);
                     piece.getPieceDesign().setIcon(new ImageIcon(getClass().getResource("P2 Piece.png")));
-                    //GUI.slots[i][j].add(piece.getPieceDesign());
                     getP2().getPieces().add(piece);
                 }
             }
@@ -155,12 +165,14 @@ public class Board /*extends Container*/ implements Cloneable {
     public int getScore() {
         int score = 0;
         for(Piece piece : getP1().getPieces()) {
-            if(piece.isKing()) score += 2;
+            if(piece.isKing()) score += 3;
             else score += 1;
+			score += piece.genJumps(this).size();
         }
         for(Piece piece : getP2().getPieces()) {
-            if(piece.isKing()) score -= 2;
+            if(piece.isKing()) score -= 3;
             else score -= 1;
+			score -= piece.genJumps(this).size();
         }
         return score;
     }
@@ -190,18 +202,21 @@ public class Board /*extends Container*/ implements Cloneable {
     public boolean movePiece(Piece piece, Slot move) {
         boolean jump = false;
         boolean king = false;
+		setLastMove(new Move(piece, move));
         //If Player 1's turn...
         if(piece.getOwner() == getP1()) {
             //Down-Right Jump
             try {
                 if(getSlots()[piece.getSlot().getRow()+2][piece.getSlot().getColumn()+2] == move) {
-                    piece.jump(getSlots()[move.getRow()-1][move.getColumn()-1].getOccupyingPiece(this));
+                    getLastMove().setJumpedPiece(getSlots()[move.getRow()-1][move.getColumn()-1].getOccupyingPiece(this));
+					piece.jump(getSlots()[move.getRow()-1][move.getColumn()-1].getOccupyingPiece(this));
                     jump = true;
                 }
             } catch(ArrayIndexOutOfBoundsException e) {}
             //Down-Left Jump
             try {
                 if(getSlots()[piece.getSlot().getRow()+2][piece.getSlot().getColumn()-2] == move) {
+					getLastMove().setJumpedPiece(getSlots()[move.getRow()-1][move.getColumn()+1].getOccupyingPiece(this));
                     piece.jump(getSlots()[move.getRow()-1][move.getColumn()+1].getOccupyingPiece(this));
                     jump = true;
                 }
@@ -211,6 +226,7 @@ public class Board /*extends Container*/ implements Cloneable {
                 //Up-Left Jump
                 try {
                     if(getSlots()[piece.getSlot().getRow()-2][piece.getSlot().getColumn()-2] == move) {
+						getLastMove().setJumpedPiece(getSlots()[move.getRow()+1][move.getColumn()+1].getOccupyingPiece(this));
                         piece.jump(getSlots()[move.getRow()+1][move.getColumn()+1].getOccupyingPiece(this));
                         jump = true;
                     }
@@ -218,6 +234,7 @@ public class Board /*extends Container*/ implements Cloneable {
                 //Up-Right Jump
                 try {
                     if(getSlots()[piece.getSlot().getRow()-2][piece.getSlot().getColumn()+2] == move) {
+						getLastMove().setJumpedPiece(getSlots()[move.getRow()+1][move.getColumn()-1].getOccupyingPiece(this));
                         piece.jump(getSlots()[move.getRow()+1][move.getColumn()-1].getOccupyingPiece(this));
                         jump = true;
                     }
@@ -225,15 +242,16 @@ public class Board /*extends Container*/ implements Cloneable {
             }
             //Checks if move lands in a king spot (for the first time)
             if(move.getRow() == getSlots().length-1 && !piece.isKing()) {
+				getLastMove().setKingMove(true);
                 king = true;
                 piece.setKing(true);
-                piece.getPieceDesign().setIcon(new ImageIcon(getClass().getResource("P1 King.png")));
             }
         //If Player 2's turn...
         } else {
             //Up-Left Jump
             try {
                 if(getSlots()[piece.getSlot().getRow()-2][piece.getSlot().getColumn()-2] == move) {
+					getLastMove().setJumpedPiece(getSlots()[move.getRow()+1][move.getColumn()+1].getOccupyingPiece(this));
                     piece.jump(getSlots()[move.getRow()+1][move.getColumn()+1].getOccupyingPiece(this));
                     jump = true;
                 }
@@ -241,6 +259,7 @@ public class Board /*extends Container*/ implements Cloneable {
             //Up-Right Jump
             try {
                 if(getSlots()[piece.getSlot().getRow()-2][piece.getSlot().getColumn()+2] == move) {
+					getLastMove().setJumpedPiece(getSlots()[move.getRow()+1][move.getColumn()-1].getOccupyingPiece(this));
                     piece.jump(getSlots()[move.getRow()+1][move.getColumn()-1].getOccupyingPiece(this));
                     jump = true;
                 }
@@ -250,6 +269,7 @@ public class Board /*extends Container*/ implements Cloneable {
                 //Down-Right Jump
                 try {
                     if(getSlots()[piece.getSlot().getRow()+2][piece.getSlot().getColumn()+2] == move) {
+						getLastMove().setJumpedPiece(getSlots()[move.getRow()-1][move.getColumn()-1].getOccupyingPiece(this));
                         piece.jump(getSlots()[move.getRow()-1][move.getColumn()-1].getOccupyingPiece(this));
                         jump = true;
                     }
@@ -257,6 +277,7 @@ public class Board /*extends Container*/ implements Cloneable {
                 //Down-Left Jump
                 try {
                     if(getSlots()[piece.getSlot().getRow()+2][piece.getSlot().getColumn()-2] == move) {
+						getLastMove().setJumpedPiece(getSlots()[move.getRow()-1][move.getColumn()+1].getOccupyingPiece(this));
                         piece.jump(getSlots()[move.getRow()-1][move.getColumn()+1].getOccupyingPiece(this));
                         jump = true;
                     }
@@ -264,6 +285,7 @@ public class Board /*extends Container*/ implements Cloneable {
             }
             //Checks if move lands in a king spot (for the first time)
             if(move.getRow() == 0 && !piece.isKing()) {
+				getLastMove().setKingMove(true);
                 king = true;
                 piece.setKing(true);
                 piece.getPieceDesign().setIcon(new ImageIcon(getClass().getResource("P2 King.png")));
@@ -275,34 +297,9 @@ public class Board /*extends Container*/ implements Cloneable {
         for(Slot slot : piece.getAvailableMoves()) {
             slot.setHighlighted(false);
         }
-        setLastMove(new Move(piece, move));
-        //piece.getSlot().remove(piece.getPieceDesign());
-        //move.add(piece.getPieceDesign());
+		getLastMove().setJump(jump);
         move.addPiece(piece);
         return jump && !king && !piece.genJumps(this).isEmpty();
-    }
-    
-    /**
-     * Default clone method
-     * @return cloned board
-     */
-    @Override
-    public Board clone()  {
-        try {
-            Board board = (Board) super.clone();
-            ArrayList<Piece> pieces = new ArrayList();
-            for(Piece piece : board.getP1().getPieces()) {
-                pieces.add(piece.clone());
-            }
-            for(Piece piece : board.getP2().getPieces()) {
-                pieces.add(piece.clone());
-            }
-            return board;
-        } catch(CloneNotSupportedException e) {
-            System.out.println("Error in cloning minimax node.");
-            e.printStackTrace();
-        }
-        return null;
     }
     
 }

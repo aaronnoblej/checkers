@@ -12,7 +12,7 @@ import javax.swing.JPanel;
  *
  * @author aaron
  */
-public class Slot /*extends JPanel*/ {
+public class Slot {
     
     //==========================================================================
     // PROPERTIES
@@ -48,6 +48,17 @@ public class Slot /*extends JPanel*/ {
     //==========================================================================
     
     public Slot() {}
+	
+	/**
+	 * Cloning constructor
+	 * @param slot: slot to be cloned
+	 */
+	public Slot(Slot slot) {
+		setOccupied(slot.getOccupied());
+		setHighlighted(slot.getHighlighted());
+		setRow(slot.getRow());
+		setColumn(slot.getColumn());
+	}
         
     //==========================================================================
     // METHODS

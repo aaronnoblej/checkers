@@ -13,7 +13,7 @@ import javax.swing.JLabel;
  *
  * @author aaron
  */
-public class Piece implements Cloneable {
+public class Piece {
     
     //==========================================================================
     // PROPERTIES
@@ -37,10 +37,7 @@ public class Piece implements Cloneable {
     
     private boolean isKing = false;
     public boolean isKing() {return isKing;}
-    public void setKing(boolean val) {
-        isKing = val;
-        if(val) System.out.println("KINGED!");
-    }
+    public void setKing(boolean val) {isKing = val;}
 		
     //==========================================================================
     // CONSTRUCTORS
@@ -51,6 +48,14 @@ public class Piece implements Cloneable {
     public Piece(Player owner) {
         setOwner(owner);
     }
+	
+	/**
+	 * Cloning constructor
+	 * @param piece: piece to be cloned
+	 */
+	public Piece(Piece piece) {
+		this.setKing(piece.isKing());
+	}
     
     //==========================================================================
     // METHODS
@@ -62,10 +67,7 @@ public class Piece implements Cloneable {
      */
     public void jump(Piece piece) {
         piece.getSlot().setOccupied(false);
-        piece.getPieceDesign().getParent().remove(piece.getPieceDesign());
         piece.getOwner().getPieces().remove(piece);
-        System.out.println("JUMPED!");
-		piece.getOwner().setJumped(true);
     }
     
     /**
@@ -200,16 +202,6 @@ public class Piece implements Cloneable {
             } catch(ArrayIndexOutOfBoundsException e) {}
         }
         return jumps;
-    }
-    
-    @Override
-    public Piece clone() {
-        try {
-            return (Piece) super.clone();
-        } catch(CloneNotSupportedException e) {
-            e.printStackTrace();
-        }
-        return null;
     }
     
 }

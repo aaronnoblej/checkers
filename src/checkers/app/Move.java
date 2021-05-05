@@ -22,15 +22,27 @@ class Move {
     private Slot slot;
     public Slot getSlot() {return slot;}
     public void setSlot(Slot val) {slot = val;}
+	
+	private boolean jump;
+	public boolean getJump() {return jump;}
+	public void setJump(boolean val) {jump = val;}
+	
+	private Piece jumpedPiece;
+	public Piece getJumpedPiece() {return jumpedPiece;}
+	public void setJumpedPiece(Piece val) {jumpedPiece = val;}
+	
+	private boolean kingMove;
+	public boolean getKingMove() {return kingMove;}
+	public void setKingMove(boolean val) {kingMove = val;}
     
     //==========================================================================
     // CONSTRUCTORS
     //==========================================================================
-    
-    public Move(Piece movingPiece, Slot resultingSlot) {
-        setPiece(movingPiece);
+	
+	public Move(Piece movingPiece, Slot resultingSlot) {
+		setPiece(movingPiece);
         setSlot(resultingSlot);
-    }
+	}
     
     //==========================================================================
     // METHODS

@@ -55,11 +55,9 @@ public class Player {
 	public PlayerPanel getPanel() {return panel;}
 	public void setPanel(PlayerPanel val) {panel = val;}
 	
-	protected boolean jumped = false;
-	public void setJumped(boolean val) {
-		if(val) {
-			getOpponent().getPanel().addPiece();
-		}
+	//protected boolean jumped = false;
+	public void setJumped() {
+		getOpponent().getPanel().addPiece();
 	}
 	
     //==========================================================================
@@ -74,6 +72,21 @@ public class Player {
 			setPanel(new PlayerPanel(this, false));
 		}
     }
+	
+	/**
+	 * Cloning constructor
+	 * @param player: player to be cloned
+	 */
+	public Player(Player player) {
+		//Clone all pieces
+		ArrayList<Piece> clonedPieces = new ArrayList();
+		for(Piece piece : player.getPieces()) {
+			Piece temp = new Piece(piece);
+			temp.setOwner(this);
+			clonedPieces.add(temp);
+		}
+		this.setPieces(clonedPieces);
+	}
     
     //==========================================================================
     // METHODS

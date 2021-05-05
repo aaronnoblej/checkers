@@ -12,9 +12,13 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Image;
 import java.awt.Toolkit;
+import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -29,7 +33,7 @@ public class CheckersApp {
     static Container gameBoard = new Container();
     static int height = (int) (Toolkit.getDefaultToolkit().getScreenSize().getHeight() * 0.9);
     static int width = (int) (Toolkit.getDefaultToolkit().getScreenSize().getWidth() * 0.75);
-    static Game game = new Game();
+    static Game game = new Game(3, true);
     
     public static void main(String[] args) {
         //Set Main Frame
@@ -49,8 +53,6 @@ public class CheckersApp {
 		game.getGUI().createPieces();
 		
         checkers.setVisible(true);
-		
-		
 		
         game.start();
     }

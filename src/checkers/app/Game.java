@@ -9,6 +9,7 @@ import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import javax.swing.SwingUtilities;
 
 /**
  *
@@ -30,15 +31,12 @@ public class Game {
     
     private Player currentTurn;
     public Player getCurrentTurn() {return currentTurn;}
-    public void setCurrentTurn(Player val) {
-        currentTurn = val;
-        val.setEnabled(true);
-    }
+    public void setCurrentTurn(Player val) {currentTurn = val;}
     
     private GUI gui;
     public GUI getGUI() {return gui;}
     public void setGUI(GUI val) {gui = val;}
-    
+	
     private boolean jumpInProgress = false;
         
     //==========================================================================
@@ -62,26 +60,29 @@ public class Game {
      */
     public Game(int difficulty, boolean opponentIsHuman) {
         setBoard(new Board());
-        AI p1 = new AI(difficulty);
-        p1.setGame(this);
+        AI p1 = new AI("Red", difficulty, true);
         ArrayList<Piece> piecesP1 = new ArrayList();
         for(Piece piece : getBoard().getP1().getPieces()) {
             piecesP1.add(piece);
         }
         p1.setPieces(piecesP1);
         getBoard().setP1(p1);
+		p1.setGame(this);
         if(!opponentIsHuman) {
-            AI p2 = new AI(difficulty);
+            AI p2 = new AI("Black", difficulty, false);
             ArrayList<Piece> piecesP2 = new ArrayList();
             for(Piece piece : getBoard().getP2().getPieces()) {
                 piecesP2.add(piece);
             }
             p2.setPieces(piecesP2);
             getBoard().setP2(p2);
+			p2.setGame(this);
         } else {
             enableHighlights(getBoard().getP2());
         }
-        setGUI(new GUI(this));
+		getBoard().getP1().setOpponent(getBoard().getP2());
+		getBoard().getP2().setOpponent(getBoard().getP1());
+        setGUI(new GUI(this));		
     }
     
     //==========================================================================
@@ -104,12 +105,15 @@ public class Game {
         System.out.println("It is " + getBoard().getP1().getName() + "'s turn.");
         System.out.println(getCurrentTurn().getName() + " has " + getBoard().getP1().numberOfMoves() + " available moves");
         System.out.println("Score: " + getBoard().getScore());
+		getCurrentTurn().setEnabled(true);
     }
     
     /**
      * Switches turn to opposite player
      */
     public void rotateTurn() {
+		if(getBoard().checkWin()) System.exit(0);
+		getGUI().update(getBoard());
         jumpInProgress = false;
         getCurrentTurn().setEnabled(false);
         setCurrentTurn(getCurrentTurn().getOpponent());
@@ -120,11 +124,9 @@ public class Game {
         System.out.print(getCurrentTurn().getName() + " has " + getCurrentTurn().numberOfMoves() + " available moves");
         System.out.println(" | " + getCurrentTurn().getPieces().size() + " pieces left");
         System.out.println("Score: " + getBoard().getScore());
-		
+		getCurrentTurn().setEnabled(true);
 		getCurrentTurn().getPanel().highlight();
 		getCurrentTurn().getOpponent().getPanel().highlight();
-		
-        if(getBoard().checkWin()) System.exit(0);
     }
     
     /**
@@ -237,7 +239,6 @@ public class Game {
                 public void mouseExited(MouseEvent me) {
                     if(player.getEnabled() && getSelectedPiece() != piece) {
                         getGUI().getSlots()[piece.getSlot().getRow()][piece.getSlot().getColumn()].setBackground(GUI.boardColor2);
-                        //piece.getSlot().setBackground(GUI.boardColor2);
                     }
                 }
             });

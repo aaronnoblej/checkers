@@ -10,9 +10,14 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Image;
+import java.lang.reflect.InvocationTargetException;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.SwingUtilities;
+import javax.swing.Timer;
 import javax.swing.border.LineBorder;
 
 /**
@@ -97,11 +102,26 @@ public class GUI extends JPanel {
      * Updates the GUI to the user showing the results of last move
      * @param board Board state to be shown
      */
-    public void update(Board board) {
-        board.getLastMove().getPiece().getPieceDesign().getParent().remove(board.getLastMove().getPiece().getPieceDesign());
-        slots[board.getLastMove().getSlot().getRow()][board.getLastMove().getSlot().getColumn()].add(board.getLastMove().getPiece().getPieceDesign());
-        revalidate();
-        repaint();
+    public void update(Board board) {		
+		Move lastMove = board.getLastMove();
+		if(lastMove.getJump()) {
+			lastMove.getJumpedPiece().getPieceDesign().getParent().remove(lastMove.getJumpedPiece().getPieceDesign());
+			lastMove.getJumpedPiece().getOwner().setJumped();
+			lastMove.setJump(false);
+		}
+		if(lastMove.getKingMove()) {
+			Piece piece = lastMove.getPiece();
+			if(game.getCurrentTurn() == game.getBoard().getP1()) {
+				piece.getPieceDesign().setIcon(new ImageIcon(new ImageIcon(getClass().getResource("P1 King.png")).getImage().getScaledInstance(piece.getPieceDesign().getParent().getWidth(), piece.getPieceDesign().getParent().getHeight(), Image.SCALE_DEFAULT)));
+			} else {
+				piece.getPieceDesign().setIcon(new ImageIcon(new ImageIcon(getClass().getResource("P2 King.png")).getImage().getScaledInstance(piece.getPieceDesign().getParent().getWidth(), piece.getPieceDesign().getParent().getHeight(), Image.SCALE_DEFAULT)));
+			}
+			lastMove.setKingMove(false);
+		}
+		lastMove.getPiece().getPieceDesign().getParent().remove(lastMove.getPiece().getPieceDesign());
+		slots[lastMove.getSlot().getRow()][lastMove.getSlot().getColumn()].add(lastMove.getPiece().getPieceDesign());
+		revalidate();
+		repaint();
     }
     
 }
