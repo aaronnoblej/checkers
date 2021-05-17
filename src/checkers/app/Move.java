@@ -23,6 +23,10 @@ class Move {
     public Slot getSlot() {return slot;}
     public void setSlot(Slot val) {slot = val;}
 	
+	private Slot origin;
+	public Slot getOrigin() {return origin;}
+    public void setOrigin(Slot val) {origin = val;}
+	
 	private boolean jump;
 	public boolean getJump() {return jump;}
 	public void setJump(boolean val) {jump = val;}

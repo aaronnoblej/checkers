@@ -24,16 +24,7 @@ public class Slot {
     
     private boolean highlighted = false;
     public boolean getHighlighted() {return highlighted;}
-    public void setHighlighted(boolean val) {
-        highlighted = val;
-        if(val) {
-            GUI.slots[getRow()][getColumn()].setBackground(GUI.highlightColor);
-            GUI.slots[getRow()][getColumn()].setCursor(new Cursor(Cursor.HAND_CURSOR));
-        } else {
-            GUI.slots[getRow()][getColumn()].setBackground(GUI.boardColor2);
-            GUI.slots[getRow()][getColumn()].setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-        }
-    }
+    public void setHighlighted(boolean val) {highlighted = val;}
     
     private int row;
     public int getRow() {return row;}
@@ -55,7 +46,6 @@ public class Slot {
 	 */
 	public Slot(Slot slot) {
 		setOccupied(slot.getOccupied());
-		setHighlighted(slot.getHighlighted());
 		setRow(slot.getRow());
 		setColumn(slot.getColumn());
 	}

@@ -10,14 +10,9 @@ import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Image;
-import java.lang.reflect.InvocationTargetException;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import javax.swing.SwingUtilities;
-import javax.swing.Timer;
 import javax.swing.border.LineBorder;
 
 /**
@@ -37,8 +32,8 @@ public class GUI extends JPanel {
     public static Color hoverColor = Color.GRAY;
     
     //Linked with game
-	private Game game;
-    public static JPanel[][] slots = null;
+	private final Game game;
+    private JPanel[][] slots;
     public JPanel[][] getSlots() {return slots;}
     public void setSlots(JPanel[][] val) {slots = val;}
     
@@ -102,7 +97,7 @@ public class GUI extends JPanel {
      * Updates the GUI to the user showing the results of last move
      * @param board Board state to be shown
      */
-    public void update(Board board) {		
+    public synchronized void update(Board board) {		
 		Move lastMove = board.getLastMove();
 		if(lastMove.getJump()) {
 			lastMove.getJumpedPiece().getPieceDesign().getParent().remove(lastMove.getJumpedPiece().getPieceDesign());
@@ -120,8 +115,18 @@ public class GUI extends JPanel {
 		}
 		lastMove.getPiece().getPieceDesign().getParent().remove(lastMove.getPiece().getPieceDesign());
 		slots[lastMove.getSlot().getRow()][lastMove.getSlot().getColumn()].add(lastMove.getPiece().getPieceDesign());
+		lastMove.getOrigin().setHighlighted(false);
+		game.highlightSlot(lastMove.getOrigin());
+		for(Slot slot : lastMove.getPiece().getAvailableMoves()) {
+            slot.setHighlighted(false);
+			game.highlightSlot(slot);
+        }
 		revalidate();
 		repaint();
     }
+	
+	public void playSound(String fileName) {
+		//Add sound effects and music
+	}
     
 }

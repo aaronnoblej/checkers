@@ -6,7 +6,7 @@
 package checkers.app;
 
 import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.ThreadLocalRandom;
 import javax.swing.SwingUtilities;
 
 /**
@@ -27,7 +27,7 @@ public class AI extends Player {
 	public Game getGame() {return game;}
 	public void setGame(Game val) {game = val;}
 	
-	private int bestMoveIndex[];
+	private int moveVals[];
 	private ArrayList<Move> moves = new ArrayList<Move>();
 	
 	private boolean isMaximizingPlayer;
@@ -59,15 +59,21 @@ public class AI extends Player {
      * @param val 
      */
     @Override
-    public void setEnabled(boolean val) {
+    public synchronized void setEnabled(boolean val) {
         enabled = val;
         if(val) {
 			//Create thread and run minimax
 			Thread boardAnalysis = new Thread() {
 				@Override
 				public void run() {
-					bestMoveIndex = new int[numberOfMoves()];
+					moveVals = new int[numberOfMoves()];
 					int best = minimax(getGame().getBoard(), getDifficulty(), isMaximizingPlayer);
+					
+					//Remove the following three lines
+					System.out.print("Best Moves: ");
+					for(Integer i : moveVals) System.out.print(i + " ");
+					System.out.println("");
+					
 					makeMove(best);
 					moves.clear();
 					game.getGUI().update(game.getBoard());
@@ -78,10 +84,15 @@ public class AI extends Player {
         }
     }
 	
-	public void makeMove(int best) {
-		//If there is a chance for a double jump, do it
+	
+	/**
+	 * 
+	 * @param best is the index returned from getOptimalIndex()
+	 */ 
+	private void makeMove(int best) {
 		Piece bestPiece = moves.get(best).getPiece();
 		Slot bestSlot = moves.get(best).getSlot();
+		//Runnable to highlight/unhighlight
 		Runnable highlighter = new Runnable() {
 			@Override
 			public void run() {
@@ -92,18 +103,19 @@ public class AI extends Player {
 				}
 				for(Slot move : bestPiece.getAvailableMoves()) {
 					move.setHighlighted(true);
+					game.highlightSlot(move);
 				}
 			}
-		}; //Runnable to highlight/unhighlight
+		};
 		SwingUtilities.invokeLater(highlighter);
-		//Pause for half a second
-		try {Thread.sleep(500);} catch(InterruptedException e) {}
+		//Pause for one second
+		try {Thread.sleep(1000);} catch(InterruptedException e) {}
+		
 		if(game.getBoard().movePiece(bestPiece, bestSlot)) {
 			game.getGUI().update(game.getBoard());
 			bestPiece.setAvailableMoves(bestPiece.genJumps(game.getBoard()));
-			makeMove(bestPiece); //For now, only takes the first (possibly only) of the multiple jump route(s)*/
 			
-			//I MUST FIND A WAY TO UPDATE THE GUI AFTER THE FIRST JUMP
+			makeAdditionalMove(bestPiece); //For now, only takes the first (possibly only) of the multiple jump route(s)*/
 		}
 	}
 	
@@ -111,7 +123,7 @@ public class AI extends Player {
 	 * Method used for doing an additional jump
 	 * @param nextJumpPiece piece to move forward
 	 */
-	public void makeMove(Piece nextJumpPiece) {
+	private void makeAdditionalMove(Piece nextJumpPiece) {
 		Slot slot = nextJumpPiece.getAvailableMoves().get(0);
 		Runnable highlighter = new Runnable() {
 			@Override
@@ -123,53 +135,82 @@ public class AI extends Player {
 				}
 				for(Slot move : nextJumpPiece.getAvailableMoves()) {
 					move.setHighlighted(true);
+					game.highlightSlot(move);
 				}
 			}
 		}; //Runnable to highlight/unhighlight
 		SwingUtilities.invokeLater(highlighter);
 		//Pause for half a second
-		try {Thread.sleep(500);} catch(InterruptedException e) {}
+		try {Thread.sleep(1000);} catch(InterruptedException e) {}
 		if(game.getBoard().movePiece(nextJumpPiece, slot)) {
 			game.getGUI().update(game.getBoard());
 			nextJumpPiece.setAvailableMoves(nextJumpPiece.genJumps(game.getBoard()));
-			makeMove(nextJumpPiece); //For now, only takes the first (possibly only) of the multiple jump route(s)*/
+			makeAdditionalMove(nextJumpPiece); //For now, only takes the first (possibly only) of the multiple jump route(s)
 		}
 	}
     
-    public int minimax(Board board, int depth, boolean isMaximizing) {		
-        if(depth == 0 || board.checkWin()) {
-            //return the current board state node in the tree
+	/**
+	 * Minimax procedure for evaluating the state of the board and choosing best move
+	 * @param board state of the board to be evaluated, represents one node of the generated tree
+	 * @param depth how deep the algorithm should look in the tree
+	 * @param isMaximizing true for player one, false for player two
+	 * @return the score of the board at the bottom level; if returning back to caller, return optimal index
+	 */
+    public int minimax(Board board, int depth, boolean isMaximizing) {	
+		//First checks to see if the board is in a winning state
+		if(isMaximizing) {
+			if(board.checkWin(board.getP1())) {
+				if(board.getWinningPlayer() == board.getP1()) {
+					return board.getScore() + 10;
+				} else {
+					return board.getScore() - 10;
+				}
+			}
+		} else {
+			if(board.checkWin(board.getP2())) {
+				if(board.getWinningPlayer() == board.getP2()) {
+					return board.getScore() - 10;
+				} else {
+					return board.getScore() + 10;
+				}
+			}
+		}
+		
+		if(depth == 0) {
             return board.getScore();
         }
+		
         if(isMaximizing) {			
             int value = Integer.MIN_VALUE;
 			int count = 0;
             for(Piece piece : board.getP1().getMoveablePieces()) {
                 for(Slot slot : piece.getAvailableMoves()) {
-                    value = Math.max(value, minimax(genBoardState(board, piece, slot), depth-1, false));
+					int output = minimax(genBoardState(board, piece, slot), depth-1, false);
 					if(depth == getDifficulty()) {
 						this.moves.add(new Move(piece, slot));
-						this.bestMoveIndex[count] = value;
+						this.moveVals[count] = output;
 					}
+					value = Math.max(value, output);
 					count++;
                 }
             }
-			if(depth == getDifficulty()) return getOptimalIndex();
+			if(depth == getDifficulty()) return getOptimalIndex(value);
             return value;
         } else {
             int value = Integer.MAX_VALUE;
 			int count = 0;
             for(Piece piece : board.getP2().getMoveablePieces()) {
                 for(Slot slot : piece.getAvailableMoves()) {
-                    value = Math.min(value, minimax(genBoardState(board, piece, slot), depth-1, true));
+					int output = minimax(genBoardState(board, piece, slot), depth-1, true);
 					if(depth == getDifficulty()) {
 						this.moves.add(new Move(piece, slot));
-						this.bestMoveIndex[count] = value;
+						this.moveVals[count] = output;
 					}
+					value = Math.min(value, output);
 					count++;
                 }
             }
-			if(depth == getDifficulty()) return getOptimalIndex();
+			if(depth == getDifficulty()) return getOptimalIndex(value);
             return value;
         }
     }
@@ -178,10 +219,11 @@ public class AI extends Player {
         Board node = new Board(board);
 		piece = node.getSlots()[piece.getSlot().getRow()][piece.getSlot().getColumn()].getOccupyingPiece(node);
 		slot = node.getSlots()[slot.getRow()][slot.getColumn()];
-		
-        if(node.movePiece(piece, slot)) {
+				
+		//Possibly needs revision - evalutes for double jumps
+		while(node.movePiece(piece, slot)) {
 			piece.setAvailableMoves(piece.genJumps(node));
-			node = genBoardState(node, piece, piece.getAvailableMoves().get(0));
+			slot = piece.getAvailableMoves().get(0); //For now only does first possible double jump
 		}
 		
 		//Generate available moves for the node
@@ -195,19 +237,24 @@ public class AI extends Player {
         return node;
     }
 	
-	private int getOptimalIndex() {
-		if(this.isMaximizingPlayer) {
-			int max = 0;
-			for(int i = 0; i < bestMoveIndex.length; i++) {
-				if(bestMoveIndex[i] > bestMoveIndex[max]) max = i;
+	/**
+	 * Finds the best index of moveVals that AI should take
+	 * @param val the minimum/maximum val from the minimax function
+	 * @return the best index
+	 */
+	private int getOptimalIndex(int val) {
+		ArrayList<Integer> bests = new ArrayList(); //List of identical max/mins
+		for(int i = 0; i < moveVals.length; i++) {
+			if(moveVals[i] == val) {
+				bests.add(i);
 			}
-			return max;
+		}
+		//If there are multiple moves of same worth, choose a random one
+		if(bests.size() > 1) {
+			System.out.println("Multiple best moves, choosing random from " + bests.size() + " indexes!");
+			return bests.get(ThreadLocalRandom.current().nextInt(0, bests.size()));
 		} else {
-			int min = 0;
-			for(int i = 0; i < bestMoveIndex.length; i++) {
-				if(bestMoveIndex[i] < bestMoveIndex[min]) min = i;
-			}
-			return min;
+			return bests.get(0);
 		}
 	}
 	

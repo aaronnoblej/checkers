@@ -9,6 +9,8 @@ import java.awt.Cursor;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.util.ArrayList;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 import javax.swing.SwingUtilities;
 
 /**
@@ -82,7 +84,7 @@ public class Game {
         }
 		getBoard().getP1().setOpponent(getBoard().getP2());
 		getBoard().getP2().setOpponent(getBoard().getP1());
-        setGUI(new GUI(this));		
+        setGUI(new GUI(this));
     }
     
     //==========================================================================
@@ -98,8 +100,7 @@ public class Game {
         }
         for(Piece piece : getBoard().getP2().getPieces()) {
             piece.genAvailableMoves(getBoard());
-        }
-		
+        }		
         setCurrentTurn(getBoard().getP1());
 		getCurrentTurn().getPanel().highlight();
         System.out.println("It is " + getBoard().getP1().getName() + "'s turn.");
@@ -112,14 +113,14 @@ public class Game {
      * Switches turn to opposite player
      */
     public void rotateTurn() {
-		if(getBoard().checkWin()) System.exit(0);
-		getGUI().update(getBoard());
         jumpInProgress = false;
+		getGUI().update(getBoard());
         getCurrentTurn().setEnabled(false);
         setCurrentTurn(getCurrentTurn().getOpponent());
         for(Piece piece : getCurrentTurn().getPieces()) {
             piece.genAvailableMoves(getBoard());
         }
+		if(getBoard().checkWin(getCurrentTurn())) System.exit(0); //UPDATE LATER
         System.out.println("It is " + getCurrentTurn().getName() + "'s turn");
         System.out.print(getCurrentTurn().getName() + " has " + getCurrentTurn().numberOfMoves() + " available moves");
         System.out.println(" | " + getCurrentTurn().getPieces().size() + " pieces left");
@@ -166,6 +167,7 @@ public class Game {
                             if(!getSelectedPiece().getAvailableMoves().isEmpty()) {
                                 for(Slot slot : getSelectedPiece().getAvailableMoves()) {
                                     slot.setHighlighted(false);
+									highlightSlot(slot);
                                 }
                             }
                         }
@@ -176,6 +178,7 @@ public class Game {
                             if(!piece.getAvailableMoves().isEmpty()) {
                                 for(Slot slot : piece.getAvailableMoves()) {
                                     slot.setHighlighted(false);
+									highlightSlot(slot);
                                 }
                             }
                         //Used when no piece is selected and a piece is clicked on    
@@ -184,6 +187,7 @@ public class Game {
                             setSelectedPiece(piece);
                             for(Slot move : piece.getAvailableMoves()) {
                                 move.setHighlighted(true);
+								highlightSlot(move);
                                 getGUI().getSlots()[move.getRow()][move.getColumn()].addMouseListener(new MouseListener() {
                                     @Override
                                     public void mouseClicked(MouseEvent me) {
@@ -191,12 +195,12 @@ public class Game {
                                         if(move.getHighlighted()) {
                                             //Checks if there are additional jumps
                                             if(getBoard().movePiece(getSelectedPiece(), move)) {
+												getGUI().update(getBoard());
                                                 highlightAdditionalJumps(getSelectedPiece());
                                             } else {
                                                 setSelectedPiece(null);
                                                 rotateTurn();
                                             }
-                                            getGUI().update(getBoard());
                                         }
                                     }
 
@@ -217,10 +221,12 @@ public class Game {
                         }
                     //Used when a piece is in jump mode and player clicks piece to cancel additional jumping
                     } else if(jumpInProgress && piece == getSelectedPiece()) {
-                        piece.getSlot().setHighlighted(false);
+						piece.getSlot().setHighlighted(false);
+						highlightSlot(piece.getSlot());
                         //Unhighlights all moves
                         for(Slot slot : piece.getAvailableMoves()) {
                             slot.setHighlighted(false);
+							highlightSlot(slot);
                         }
                         setSelectedPiece(null);
                         getGUI().update(getBoard());
@@ -255,17 +261,18 @@ public class Game {
         piece.getPieceDesign().getParent().setBackground(GUI.boardColor2);
         for(Slot move : piece.getAvailableMoves()) {
             move.setHighlighted(true);
+			highlightSlot(move);
             getGUI().getSlots()[move.getRow()][move.getColumn()].addMouseListener(new MouseListener() {
                 @Override
                 public void mouseClicked(MouseEvent me) {
                     if(move.getHighlighted()) {
                         if(getBoard().movePiece(getSelectedPiece(), move)) {
+							getGUI().update(getBoard());
                             highlightAdditionalJumps(getSelectedPiece());
                         } else {
                             setSelectedPiece(null);
                             rotateTurn();
                         }
-                        getGUI().update(getBoard());
                     }
                 }
 
@@ -284,5 +291,19 @@ public class Game {
             });
         }
     }
+	
+	/**
+	 * Used to highlight the board
+	 * @param slot is the slot to be highlighted
+	 */
+	public void highlightSlot(Slot slot) {
+		if(slot.getHighlighted()) {
+			getGUI().getSlots()[slot.getRow()][slot.getColumn()].setBackground(GUI.highlightColor);
+			getGUI().getSlots()[slot.getRow()][slot.getColumn()].setCursor(new Cursor(Cursor.HAND_CURSOR));
+		} else {
+			getGUI().getSlots()[slot.getRow()][slot.getColumn()].setBackground(GUI.boardColor2);
+			getGUI().getSlots()[slot.getRow()][slot.getColumn()].setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+		}
+	}
     
 }

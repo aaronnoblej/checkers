@@ -160,6 +160,7 @@ public class Board {
     
     /**
      * Gives each piece a value on the board and computes a total score value for the board
+	 * Looks at number of pieces, kings, number of jumps, and number of moves
      * @return score of the board
      */
     public int getScore() {
@@ -176,20 +177,37 @@ public class Board {
         }
         return score;
     }
+	
+	public Player getWinningPlayer() {
+		if(getScore() < 0) return getP2();
+		else if(getScore() > 0) return getP1();
+		else return null;
+	}
     
     /**
      * Checks if a player has won
      * A player wins if the opposing player has no pieces remaining or has no more available moves
+	 * @param currentTurn the current player's turn; it will check if the player's opponent has anymore moves
      * @return true if a player has won and the game is over
      */
-    public boolean checkWin() {
-        if(getP2().getPieces().isEmpty() || getP2().numberOfMoves() == 0) {
+    public boolean checkWin(Player currentTurn) {
+		//Check if anyone is out of pieces
+		if(getP2().getPieces().isEmpty()) {
             System.out.println("Game Over! Player 1 Wins!");
             return true;
-        } else if(getP1().getPieces().isEmpty() || getP1().numberOfMoves() == 0) {
+        } else if(getP1().getPieces().isEmpty()) {
             System.out.println("Game Over! Player 2 Wins!");
             return true;
         }
+		//Check if the current player can make moves
+		if(currentTurn.numberOfMoves() == 0) {
+			if(currentTurn == getP1()) {
+				System.out.println("Game Over! Player 1 Cannot Move! Player 2 Wins!");
+			} else {
+				System.out.println("Game Over! Player 2 Cannot Move! Player 1 Wins!");
+			}
+			return true;
+		}
         return false;
     }
     
@@ -203,6 +221,7 @@ public class Board {
         boolean jump = false;
         boolean king = false;
 		setLastMove(new Move(piece, move));
+		getLastMove().setOrigin(piece.getSlot());
         //If Player 1's turn...
         if(piece.getOwner() == getP1()) {
             //Down-Right Jump
@@ -288,15 +307,9 @@ public class Board {
 				getLastMove().setKingMove(true);
                 king = true;
                 piece.setKing(true);
-                piece.getPieceDesign().setIcon(new ImageIcon(getClass().getResource("P2 King.png")));
             }
         }
         piece.getSlot().setOccupied(false);
-        piece.getSlot().setHighlighted(false);
-        //Unhighlights all moves
-        for(Slot slot : piece.getAvailableMoves()) {
-            slot.setHighlighted(false);
-        }
 		getLastMove().setJump(jump);
         move.addPiece(piece);
         return jump && !king && !piece.genJumps(this).isEmpty();

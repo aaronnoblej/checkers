@@ -74,7 +74,7 @@ public class Piece {
      * Finds available slots and adds them to the available moves list
      * @param board - board in which should be analyzed for moves
      */
-    public void genAvailableMoves(Board board) {
+    public synchronized void genAvailableMoves(Board board) {
         // For Player 1
         if(getOwner() == board.getP1() || isKing()) {
             ArrayList<Slot> temp = new ArrayList();
