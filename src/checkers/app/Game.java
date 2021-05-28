@@ -117,10 +117,25 @@ public class Game {
 		getGUI().update(getBoard());
         getCurrentTurn().setEnabled(false);
         setCurrentTurn(getCurrentTurn().getOpponent());
+		
+		//We generate the available moves for both sides so we can do background evaluation
         for(Piece piece : getCurrentTurn().getPieces()) {
             piece.genAvailableMoves(getBoard());
         }
-		if(getBoard().checkWin(getCurrentTurn())) System.exit(0); //UPDATE LATER
+		for(Piece piece : getCurrentTurn().getOpponent().getPieces()) {
+            piece.genAvailableMoves(getBoard());
+        }
+		
+		//End the game if winner
+		if(getBoard().checkWin(getCurrentTurn()) != 0) {
+			int status = getBoard().checkWin(getCurrentTurn());
+			System.out.println("Status code = " + status);
+			if(status == 1 || status == 3) getGUI().winnerPopup(getBoard().getP1());
+			else if(status == 2 || status == 4) getGUI().winnerPopup(getBoard().getP2());
+			else getGUI().winnerPopup(null);
+			return;
+		}
+		
         System.out.println("It is " + getCurrentTurn().getName() + "'s turn");
         System.out.print(getCurrentTurn().getName() + " has " + getCurrentTurn().numberOfMoves() + " available moves");
         System.out.println(" | " + getCurrentTurn().getPieces().size() + " pieces left");
@@ -146,7 +161,6 @@ public class Game {
                         //Turns slot to the hover color if a piece occupies it
                         if(getSelectedPiece() != piece) {
                             getGUI().getSlots()[piece.getSlot().getRow()][piece.getSlot().getColumn()].setBackground(GUI.hoverColor);
-                            //piece.getSlot().setBackground(GUI.hoverColor);
                         }
                     //Enables hand cursor for double jumping
                     } else if(jumpInProgress && piece == getSelectedPiece()) {

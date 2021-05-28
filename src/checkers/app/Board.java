@@ -160,55 +160,58 @@ public class Board {
     
     /**
      * Gives each piece a value on the board and computes a total score value for the board
-	 * Looks at number of pieces, kings, number of jumps, and number of moves
+	 * Looks at number of pieces and kings
      * @return score of the board
      */
     public int getScore() {
-        int score = 0;
+		int score = 0;
         for(Piece piece : getP1().getPieces()) {
-            if(piece.isKing()) score += 3;
+            if(piece.isKing()) score += 2;
             else score += 1;
-			score += piece.genJumps(this).size();
         }
         for(Piece piece : getP2().getPieces()) {
-            if(piece.isKing()) score -= 3;
+            if(piece.isKing()) score -= 2;
             else score -= 1;
-			score -= piece.genJumps(this).size();
         }
         return score;
     }
-	
-	public Player getWinningPlayer() {
-		if(getScore() < 0) return getP2();
-		else if(getScore() > 0) return getP1();
-		else return null;
-	}
     
     /**
      * Checks if a player has won
      * A player wins if the opposing player has no pieces remaining or has no more available moves
 	 * @param currentTurn the current player's turn; it will check if the player's opponent has anymore moves
-     * @return true if a player has won and the game is over
+     * @return the status code of the win, which can be interpreted as follows:
+	 *		0: There is no win
+	 *		1: P1 wins because P2 has no more pieces
+	 *		2: P2 wins because P1 has no more pieces
+	 *		3: P1 wins because P2 cannot make anymore moves
+	 *		4: P2 wins because P1 cannot make anymore moves
+	 *		5: Tie game
      */
-    public boolean checkWin(Player currentTurn) {
+    public int checkWin(Player currentTurn) {
 		//Check if anyone is out of pieces
 		if(getP2().getPieces().isEmpty()) {
             System.out.println("Game Over! Player 1 Wins!");
-            return true;
+            return 1;
         } else if(getP1().getPieces().isEmpty()) {
             System.out.println("Game Over! Player 2 Wins!");
-            return true;
+            return 2;
         }
 		//Check if the current player can make moves
 		if(currentTurn.numberOfMoves() == 0) {
+			if(currentTurn.getOpponent().numberOfMoves() == 0) {
+				System.out.println("Tie game! Nobody Wins!");
+				return 5;
+			}
 			if(currentTurn == getP1()) {
 				System.out.println("Game Over! Player 1 Cannot Move! Player 2 Wins!");
+				return 4;
 			} else {
 				System.out.println("Game Over! Player 2 Cannot Move! Player 1 Wins!");
+				return 3;
 			}
-			return true;
 		}
-        return false;
+        return 0;
     }
     
     /**

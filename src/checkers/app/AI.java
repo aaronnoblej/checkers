@@ -43,11 +43,7 @@ public class AI extends Player {
 		setMaximizingPlayer(isMaximizing);
     }
     
-    public AI(int difficulty, boolean isMaximizing) {
-        super("AI");
-        setDifficulty(difficulty);
-		setMaximizingPlayer(isMaximizing);
-    }
+    
     
     //==========================================================================
     // METHODS
@@ -156,7 +152,59 @@ public class AI extends Player {
 	 * @param isMaximizing true for player one, false for player two
 	 * @return the score of the board at the bottom level; if returning back to caller, return optimal index
 	 */
-    public int minimax(Board board, int depth, boolean isMaximizing) {	
+    public int minimax(Board board, int depth, boolean isMaximizing) {
+	
+		//First checks if the board is in a winning state, returns +/- 500 if it is
+		switch(board.checkWin(isMaximizing ? board.getP1() : board.getP2())) {
+			case 0: break;
+			case 1: return 500;
+			case 2: return -500;
+			case 3: return 500;
+			case 4: return -500;
+			case 5: return 0;
+		}
+		
+		if(depth == 0) {
+            return board.getScore();
+        }
+		
+        if(isMaximizing) {			
+            int value = Integer.MIN_VALUE;
+			int count = 0;
+			lvl: for(Piece piece : board.getP1().getMoveablePieces()) {
+                for(Slot slot : piece.getAvailableMoves()) {
+					int output = minimax(genBoardState(board, piece, slot), depth-1, false);
+					if(depth == getDifficulty()) {
+						this.moves.add(new Move(piece, slot));
+						this.moveVals[count] = output;
+					}
+					value = Math.max(value, output);
+					count++;
+                }
+            }
+			if(depth == getDifficulty()) return getOptimalIndex(value);
+            return value;
+        } else {
+            int value = Integer.MAX_VALUE;
+			int count = 0;
+			lvl: for(Piece piece : board.getP2().getMoveablePieces()) {
+                for(Slot slot : piece.getAvailableMoves()) {
+					int output = minimax(genBoardState(board, piece, slot), depth-1, true);
+					if(depth == getDifficulty()) {
+						this.moves.add(new Move(piece, slot));
+						this.moveVals[count] = output;
+					}
+					value = Math.min(value, output);
+					count++;
+                }
+            }
+			if(depth == getDifficulty()) return getOptimalIndex(value);
+            return value;
+        }
+    }
+	
+	/*public int minimax(Board board, int depth, boolean isMaximizing) {	
+		
 		//First checks to see if the board is in a winning state
 		if(isMaximizing) {
 			if(board.checkWin(board.getP1())) {
@@ -213,14 +261,20 @@ public class AI extends Player {
 			if(depth == getDifficulty()) return getOptimalIndex(value);
             return value;
         }
-    }
+    }*/
     
+	/**
+	 * Generates a node for the minimax procedure by making a move on a given board
+	 * @param board the board state used to proceed with the next board state
+	 * @param piece the piece to move
+	 * @param slot the slot to move the piece to
+	 * @return the generated board state
+	 */
     private Board genBoardState(Board board, Piece piece, Slot slot) {
         Board node = new Board(board);
 		piece = node.getSlots()[piece.getSlot().getRow()][piece.getSlot().getColumn()].getOccupyingPiece(node);
 		slot = node.getSlots()[slot.getRow()][slot.getColumn()];
 				
-		//Possibly needs revision - evalutes for double jumps
 		while(node.movePiece(piece, slot)) {
 			piece.setAvailableMoves(piece.genJumps(node));
 			slot = piece.getAvailableMoves().get(0); //For now only does first possible double jump

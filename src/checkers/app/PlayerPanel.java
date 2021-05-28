@@ -14,7 +14,9 @@ import java.awt.Image;
 import javax.swing.ImageIcon;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.border.EmptyBorder;
 import javax.swing.border.LineBorder;
+import javax.swing.border.MatteBorder;
 
 /**
  *
@@ -26,8 +28,8 @@ public class PlayerPanel extends JPanel {
     // PROPERTIES
     //==========================================================================
     
-	public static Color containerColor = Color.LIGHT_GRAY;
-	public static Color backgroundColor = Color.BLUE;
+	public static Color containerColor = new Color(211,211,211,180);
+	public static Color backgroundColor = new Color(0,0,0,0);
 	
     private Player player;
     public Player getPlayer() {return player;}
@@ -62,7 +64,6 @@ public class PlayerPanel extends JPanel {
         container.setLayout(new FlowLayout(FlowLayout.CENTER));
         container.setPreferredSize(new Dimension(width, height/2));
         container.setBackground(containerColor);
-		container.setBorder(new LineBorder(backgroundColor, 8));
         container.add(text);
         container.add(text2);
 		
@@ -73,6 +74,9 @@ public class PlayerPanel extends JPanel {
 		container2.setLayout(new BorderLayout());
 		container2.setPreferredSize(new Dimension(width, height/2 + height/20));
 		container2.add(container, BorderLayout.CENTER);
+		container2.setBackground(containerColor);
+		container2.setBorder(new EmptyBorder(10,10,10,10));
+		container2.setOpaque(false);
 		        
         if(colored) {
             text.setForeground(Color.RED);
@@ -97,7 +101,12 @@ public class PlayerPanel extends JPanel {
 			turnIndicator.setText("");
 			turnIndicator.setBackground(backgroundColor);
         } else {
-			turnIndicator.setText("It is your turn.");
+			//Checks to see if the player is an AI by checking its class
+			if(player.getClass().getSimpleName().equals("AI")) {
+				turnIndicator.setText("Thinking...");
+			} else {
+				turnIndicator.setText("It is your turn.");
+			}
 			turnIndicator.setBackground(Color.YELLOW);
         }
     }

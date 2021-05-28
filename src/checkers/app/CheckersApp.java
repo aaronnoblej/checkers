@@ -37,11 +37,10 @@ public class CheckersApp {
      * @param args the command line arguments
      */
     static JFrame checkers = new JFrame("Java Checkers");
-    static Container gameBoard = new Container();
     static int height = (int) (Toolkit.getDefaultToolkit().getScreenSize().getHeight() * 0.9);
     static int width = (int) (Toolkit.getDefaultToolkit().getScreenSize().getWidth() * 0.75);
-    static Game game = new Game(5, true);
 	static MainScreen screen = new MainScreen();
+    static Game game;
     
     public static void main(String[] args) {
         //Set Main Frame
@@ -52,127 +51,15 @@ public class CheckersApp {
         checkers.setResizable(false);
 		
 		//Main Screen
-		
 		checkers.add(screen);
-		addListeners();
-		/*
-        checkers.add(game.getGUI(), BorderLayout.CENTER);
-        checkers.getContentPane().setBackground(Color.BLUE);
-        
-        checkers.add(game.getBoard().getP1().getPanel(), BorderLayout.WEST);
-        checkers.add(game.getBoard().getP2().getPanel(), BorderLayout.EAST);
 		
-		//Pack the frame and add the pieces
 		checkers.pack();
-		game.getGUI().createPieces();*/
-		
         checkers.setVisible(true);
-		
-        //game.start();
     }
 	
-	private static void addListeners() {
-		screen.twoPlayerGameButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		screen.aiMatchButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-		screen.watchAiMatchButton.setCursor(new Cursor(Cursor.HAND_CURSOR));
-				
-		screen.twoPlayerGameButton.addMouseListener(new MouseListener() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				game = new Game();
-				checkers.getContentPane().removeAll();
-				
-				checkers.add(game.getGUI(), BorderLayout.CENTER);
-				checkers.getContentPane().setBackground(Color.BLUE);
-
-				checkers.add(game.getBoard().getP1().getPanel(), BorderLayout.WEST);
-				checkers.add(game.getBoard().getP2().getPanel(), BorderLayout.EAST);
-
-				//Pack the frame and add the pieces
-				checkers.pack();
-				game.getGUI().createPieces();
-				
-				game.start();
-			}
-
-			@Override
-			public void mousePressed(MouseEvent e) {}
-
-			@Override
-			public void mouseReleased(MouseEvent e) {}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {}
-
-			@Override
-			public void mouseExited(MouseEvent e) {}
-			
-		});
-		
-		screen.aiMatchButton.addMouseListener(new MouseListener() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				game = new Game(5, true);
-				checkers.getContentPane().removeAll();
-				
-				checkers.add(game.getGUI(), BorderLayout.CENTER);
-				checkers.getContentPane().setBackground(Color.BLUE);
-
-				checkers.add(game.getBoard().getP1().getPanel(), BorderLayout.WEST);
-				checkers.add(game.getBoard().getP2().getPanel(), BorderLayout.EAST);
-
-				//Pack the frame and add the pieces
-				checkers.pack();
-				game.getGUI().createPieces();
-				
-				game.start();
-			}
-
-			@Override
-			public void mousePressed(MouseEvent e) {}
-
-			@Override
-			public void mouseReleased(MouseEvent e) {}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {}
-
-			@Override
-			public void mouseExited(MouseEvent e) {}
-			
-		});
-		
-		screen.watchAiMatchButton.addMouseListener(new MouseListener() {
-			@Override
-			public void mouseClicked(MouseEvent e) {
-				game = new Game(4, false);
-				checkers.getContentPane().removeAll();
-				
-				checkers.add(game.getGUI(), BorderLayout.CENTER);
-				checkers.getContentPane().setBackground(Color.BLUE);
-
-				checkers.add(game.getBoard().getP1().getPanel(), BorderLayout.WEST);
-				checkers.add(game.getBoard().getP2().getPanel(), BorderLayout.EAST);
-
-				//Pack the frame and add the pieces
-				checkers.pack();
-				game.getGUI().createPieces();
-				
-				game.start();
-			}
-
-			@Override
-			public void mousePressed(MouseEvent e) {}
-
-			@Override
-			public void mouseReleased(MouseEvent e) {}
-
-			@Override
-			public void mouseEntered(MouseEvent e) {}
-
-			@Override
-			public void mouseExited(MouseEvent e) {}
-			
-		});
-	}
+	/**
+	 * This method affects the static screen variable by adding MouseListeners
+	 * This could be moved to the MainScreen class but I thought this would be easier
+	 */
+	
 }
